@@ -47,7 +47,7 @@ final class FileManager
 
         $items = [];
         foreach ($this->disk()->directories($this->absolutePath($relativePath)) as $directory) {
-            if (basename($directory) === config('unifilemanager.thumbnails.directory')) {
+            if ($this->isHiddenName(basename($directory))) {
                 continue;
             }
             $items[] = [
@@ -59,6 +59,10 @@ final class FileManager
         }
 
         foreach ($this->disk()->files($this->absolutePath($relativePath)) as $file) {
+            if ($this->isHiddenName(basename($file))) {
+                continue;
+            }
+
             $items[] = [
                 'name' => basename($file),
                 'path' => $this->relativeFromAbsolute($file),
@@ -430,6 +434,11 @@ final class FileManager
         $this->assertDiskIsSafe($diskName);
 
         return Storage::disk($diskName);
+    }
+
+    private function isHiddenName(string $name): bool
+    {
+        return str_starts_with($name, '.');
     }
 
     private function assertDiskIsSafe(string $diskName): void

@@ -23,6 +23,18 @@ it('lists only files below its configured root', function (): void {
         ->and($items[0])->toMatchArray(['name' => 'contracts', 'path' => 'contracts', 'type' => 'directory']);
 });
 
+it('does not list dot-prefixed files or directories', function (): void {
+    Storage::disk('testing_core')->put('tenant-a/.gitignore', '*');
+    Storage::disk('testing_core')->put('tenant-a/visible.txt', 'visible');
+    Storage::disk('testing_core')->makeDirectory('tenant-a/.private');
+    Storage::disk('testing_core')->makeDirectory('tenant-a/documents');
+
+    $items = app(FileManager::class)->list((object) ['id' => 1]);
+
+    expect(array_column($items, 'name'))->toBe(['documents', 'visible.txt'])
+        ->and(array_column($items, 'name'))->not->toContain('.gitignore', '.private');
+});
+
 it('rejects a public disk configured for private storage', function (): void {
     config()->set('unifilemanager.storage_areas.private.disk', 'public');
 
