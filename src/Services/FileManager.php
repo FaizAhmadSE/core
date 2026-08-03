@@ -302,6 +302,16 @@ final class FileManager
         }
 
         $this->authorize($user, 'rename', $source);
+
+        $sourcePath = $this->absolutePath($source);
+        if (! $this->disk()->exists($sourcePath)) {
+            throw new InvalidFilePath('The source item does not exist.');
+        }
+
+        if (! $this->disk()->directoryExists($sourcePath) && $this->extension($source) !== $this->extension($name)) {
+            throw new InvalidFilePath('File extensions cannot be changed while renaming.');
+        }
+
         $target = $this->join(dirname($source) === '.' ? '' : dirname($source), $name);
 
         if ($source === $target) {
@@ -310,11 +320,6 @@ final class FileManager
 
         if ($this->disk()->exists($this->absolutePath($target))) {
             throw new InvalidFilePath('An item with this name already exists.');
-        }
-
-        $sourcePath = $this->absolutePath($source);
-        if (! $this->disk()->exists($sourcePath)) {
-            throw new InvalidFilePath('The source item does not exist.');
         }
 
         $targetPath = $this->absolutePath($target);
@@ -597,6 +602,11 @@ final class FileManager
     private function join(string $left, string $right): string
     {
         return $left === '' ? $right : $left.'/'.$right;
+    }
+
+    private function extension(string $path): string
+    {
+        return pathinfo(basename($path), PATHINFO_EXTENSION);
     }
 
     /** @return array{enabled: bool, disk: string, root: string, visibility: string} */

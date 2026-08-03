@@ -157,6 +157,12 @@ it('renames a file within the configured root', function (): void {
         ->and(Storage::disk('testing_core')->exists('tenant-a/old-name.txt'))->toBeFalse();
 });
 
+it('does not allow changing a file extension while renaming', function (): void {
+    Storage::disk('testing_core')->put('tenant-a/report.pdf', 'contents');
+
+    app(FileManager::class)->rename((object) ['id' => 1], 'report.pdf', 'report.txt');
+})->throws(InvalidFilePath::class, 'File extensions cannot be changed while renaming.');
+
 it('preserves upload names and adds a suffix instead of overwriting a file', function (): void {
     Storage::disk('testing_core')->put('tenant-a/report.pdf', 'existing');
 
