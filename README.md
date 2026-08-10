@@ -27,14 +27,12 @@ After that, the Filament package can depend on `unifilemanager/core` and keep on
 
 ## Run tests
 
-From the root Filament package repository:
-
-```bash
-composer test:core
-```
-
 From this package directory:
 
 ```bash
-../../vendor/bin/pest --configuration=phpunit.xml --cache-directory=.pest-cache
+vendor/bin/pest --configuration=phpunit.xml --cache-directory=.pest-cache
 ```
+
+## Project documents
+
+- [Changelog](CHANGELOG.md)

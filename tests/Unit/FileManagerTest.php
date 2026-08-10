@@ -184,3 +184,43 @@ it('preserves normal client filename characters such as plus signs', function ()
 
     expect($path)->toBe('Amperative_Blue+Icon_filled_RGB-1920w.png');
 });
+
+it('stores uploaded files from a remote temporary upload stream', function (): void {
+    $path = app(FileManager::class)->upload(
+        (object) ['id' => 1],
+        new RemoteStreamUploadedFileFake('remote-report.pdf', 'remote report'),
+    );
+
+    expect($path)->toBe('remote-report.pdf')
+        ->and(Storage::disk('testing_core')->get('tenant-a/remote-report.pdf'))->toBe('remote report');
+});
+
+final class RemoteStreamUploadedFileFake extends UploadedFile
+{
+    private string $streamPath;
+
+    public function __construct(string $name, string $contents)
+    {
+        $this->streamPath = tempnam(sys_get_temp_dir(), 'ufm-remote-upload-');
+        file_put_contents($this->streamPath, $contents);
+
+        parent::__construct($this->streamPath, $name, 'application/pdf', null, true);
+    }
+
+    public function __destruct()
+    {
+        if (is_file($this->streamPath)) {
+            unlink($this->streamPath);
+        }
+    }
+
+    public function getRealPath(): string
+    {
+        return 'livewire-tmp/remote-report.pdf';
+    }
+
+    public function readStream()
+    {
+        return fopen($this->streamPath, 'r');
+    }
+}

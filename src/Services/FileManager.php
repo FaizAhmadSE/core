@@ -122,7 +122,7 @@ final class FileManager
 
         $name = $this->uniqueFileName($directory, $this->uploadFileName($file));
         $path = $this->absolutePath($this->join($directory, $name));
-        $this->disk()->putFileAs(dirname($path), $file, basename($path), ['visibility' => $this->visibility()]);
+        $this->storeUploadedFile($file, $path);
         $this->thumbnailer->create($this->disk(), $path, $this->root(), $this->visibility());
 
         return $this->relativeFromAbsolute($path);
@@ -500,6 +500,29 @@ final class FileManager
         if (! in_array($extension, config('unifilemanager.allowed_extensions', []), true)
             || ! in_array($file->getMimeType(), config('unifilemanager.allowed_mimes', []), true)) {
             throw new InvalidFilePath('This file type is not allowed.');
+        }
+    }
+
+    private function storeUploadedFile(UploadedFile $file, string $path): void
+    {
+        if (method_exists($file, 'readStream')) {
+            $stream = $file->readStream();
+
+            if (is_resource($stream)) {
+                try {
+                    $stored = $this->disk()->put($path, $stream, ['visibility' => $this->visibility()]);
+                } finally {
+                    fclose($stream);
+                }
+
+                if ($stored !== false) {
+                    return;
+                }
+            }
+        }
+
+        if ($this->disk()->putFileAs(dirname($path), $file, basename($path), ['visibility' => $this->visibility()]) === false) {
+            throw new InvalidFilePath('The upload could not be stored.');
         }
     }
 
